@@ -4,19 +4,19 @@
 A command-line interface for managing your second-brain note system.
 """
 
-import re
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 from rich import print
 from rich.prompt import Prompt
 import textwrap
 
-from pydantic import BaseModel
-from pydantic_yaml import parse_yaml_file_as
-
 import typer
 from typing_extensions import Annotated
+
+from config import InvalidVaultError, load_config
+from utils import sanitize_filename
+import journal
 
 app = typer.Typer(
     name="sb",
@@ -24,196 +24,7 @@ app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
 )
-
-# Configuration
-VAULT_NAME = "second-brain"
-INBOX_FOLDER = "0_Inbox"
-
-
-class InvalidVaultError(Exception):
-    """Custom exception for invalid vault paths."""
-    pass
-
-
-class Config(BaseModel):
-    """Configuration model for the second-brain CLI."""
-    vault_path: Optional[Path] = None
-    inbox_folder: str = INBOX_FOLDER
-
-    @staticmethod
-    def load(filename: Union[str, Path]) -> Optional["Config"]:
-        """Load configuration from a YAML file.
-
-        Args:
-            filename (Union[str, Path]): Path to the configuration file.
-
-        Returns:
-            Optional[Config]: Loaded configuration object or None if config file not found.
-        """
-        if not Path(filename).exists():
-            print(f":warning: [yellow]Config file {filename} not found. Using defaults.[/yellow]")
-            return None
-        return parse_yaml_file_as(Config, filename)
-
-
-def _load_config(config_file: Path, vault_path: Optional[Path]) -> Config:
-    """Load configuration from file and override with command-line options.
-
-    Args:
-        config_file (Path): Path to the configuration file.
-        vault_path (Optional[Path]): Command-line specified vault path.
-
-    Returns:
-        Config: Loaded configuration object.
-
-    Raises:
-        InvalidVaultError: If the specified vault path is invalid.
-    """
-    config = Config.load(config_file.expanduser()) or Config()
-    if not config.vault_path:
-        config.vault_path = _find_vault_root()
-    if vault_path:
-        config.vault_path = vault_path
-
-    if not config.vault_path:
-        raise InvalidVaultError("No second-brain vault found.")
-
-    config.vault_path = config.vault_path.expanduser()
-
-    if not config.vault_path.exists() or not config.vault_path.is_dir():
-        raise InvalidVaultError(f"Invalid vault path: {config.vault_path}")
-
-    if not (config.vault_path / ".obsidian").exists():
-        raise InvalidVaultError(f"{config.vault_path} is not a valid Obsidian vault.")
-
-    return config
-
-
-def _find_vault_root() -> Optional[Path]:
-    """Find the second-brain vault by searching up the directory tree.
-
-    Returns:
-        Optional[Path]: The path to the vault root if found, otherwise None.
-    """
-    current = Path.cwd()
-
-    # Search up the directory tree
-    while current != current.parent:
-        potential_vault = current / VAULT_NAME
-        if potential_vault.exists() and potential_vault.is_dir():
-            return potential_vault
-        current = current.parent
-
-    # Also check if we're already inside the vault
-    current = Path.cwd()
-    while current != current.parent:
-        if current.name == VAULT_NAME:
-            return current
-        current = current.parent
-
-    return None
-
-
-def _sanitize_filename(title: str) -> str:
-    """Convert a title to a safe filename.
-
-    Removes special characters and replaces paces with underscores.
-
-    Args:
-        title (str): The title to sanitize.
-
-    Returns:
-        str: A sanitized filename.
-    """
-    filename = title.strip().replace(" ", "_")
-    filename = re.sub(r"[^a-zA-Z0-9\-_]", "", filename)
-    filename = re.sub(r"-+", "-", filename)
-    filename = re.sub(r"_+", "_", filename)
-    filename = filename.strip("-_")
-
-    if not filename:
-        filename = "untitled"
-
-    return filename.lower()
-
-
-@app.command()
-def daily(
-    vault_path: Annotated[Optional[Path], typer.Option("--path", "-p", help="Path to the Obsidian vault.")] = None,
-    config_file: Annotated[Path, typer.Option("--config", "-c", help="Path to the sb config file.")] = "~/.sb_config.yml",
-) -> None:
-    """Create a new daily journal entry."""
-    try:
-        config = _load_config(Path(config_file), vault_path)
-    except InvalidVaultError as exc:
-        print(f":cross_mark: [bold red]{exc}[/bold red]")
-        raise typer.Exit(code=1) from exc
-
-    daily_path = config.vault_path / "2_Areas/Journal/Daily"
-    daily_path.mkdir(parents=True, exist_ok=True)
-
-    todays_date = datetime.now().strftime("%Y-%m-%d")
-    note_path = daily_path / f"{todays_date}.md"
-
-    if note_path.exists():
-        print(f":information: [yellow]Daily note for {todays_date} already exists.[/yellow]")
-        raise typer.Exit(code=0)
-
-    created_time = datetime.now().strftime("%H:%M")
-
-    content = textwrap.dedent(f"""\
-            # {todays_date}
-
-            # Daily Goals
-
-            - [ ] 15 minutes of touch typing practice
-            - [ ] Review and prioritize tasks for the day
-            - [ ] Read three pages of the Bible
-            - [ ] 3 Sporcle quizzes
-
-            ## Today's Focus
-
-            - [ ]
-
-            ## What I Did
-
-            ### Work/Projects
-
-            ### Personal
-
-            ### Learning
-
-            ## Reflections
-
-            ### What went well?
-
-            ### What could be improved?
-
-            ### Tomorrow's priorities
-
-            -
-
-            ## Captured Ideas
-
-            <!-- Quick thoughts, links, or ideas to process later -->
-
-            ---
-
-            **Created**: {todays_date} at {created_time}**
-            **Energy Level**: /10
-            **Mood**:
-            **Weather**:
-            **Tags**:""")
-
-    try:
-        with note_path.open("w", encoding="utf-8") as f:
-            f.write(content)
-    except Exception as exc:
-        print(f":cross_mark: [bold red]Failed to create daily journal entry: {exc}[/bold red]")
-        raise typer.Exit(code=1) from exc
-
-    relative_path = note_path.relative_to(config.vault_path)
-    print(f":white_check_mark: [green]Daily journal created:[/green] {relative_path}")
+app.add_typer(journal.app, name="journal")
 
 
 @app.command()
@@ -222,14 +33,9 @@ def new(
     vault_path: Annotated[Optional[Path], typer.Option("--path", "-p", help="Path to the Obsidian vault.")] = None,
     config_file: Annotated[Path, typer.Option("--config", "-c", help="Path to the sb config file.")] = "~/.sb_config.yml",
 ) -> None:
-    """Create a new note in the inbox folder.
-
-    Examples:
-        sb new "My New Note"
-        sb new --path ~/Documents/ObsidianVault
-    """
+    """Create a new empty note in the inbox folder."""
     try:
-        config = _load_config(Path(config_file), vault_path)
+        config = load_config(Path(config_file), vault_path)
     except InvalidVaultError as exc:
         print(f":cross_mark: [bold red]{exc}[/bold red]")
         raise typer.Exit(code=1) from exc
@@ -237,7 +43,7 @@ def new(
     if not title:
         title = Prompt.ask(":spiral_notepad: Enter the title of the new note")
 
-    note_filename = _sanitize_filename(title)
+    note_filename = sanitize_filename(title)
     if not note_filename.endswith(".md"):
         note_filename += ".md"
 
@@ -261,7 +67,7 @@ def new(
             # {title}
 
             ---
-            **Created**: {created_date} at {created_time}**
+            **Created**: {created_date} at {created_time}
             **Tags**:""")
 
     try:
@@ -282,7 +88,7 @@ def info(
 ) -> None:
     """Display information about the current vault and system status."""
     try:
-        config = _load_config(Path(config_file), vault_path)
+        config = load_config(Path(config_file), vault_path)
     except InvalidVaultError as exc:
         print(f":cross_mark: [bold red]{exc}[/bold red]")
         raise typer.Exit(code=1) from exc

@@ -1,11 +1,16 @@
 #!/usr/bin/env python
+
 """Second Brain CLI Tool
 A command-line interface for managing your second-brain note system.
 """
 
+import re
+from datetime import datetime
 from pathlib import Path
 from typing import Optional, Union
 from rich import print
+from rich.prompt import Prompt
+import textwrap
 
 from pydantic import BaseModel
 from pydantic_yaml import parse_yaml_file_as
@@ -14,7 +19,6 @@ import typer
 from typing_extensions import Annotated
 
 app = typer.Typer(
-    name="sb",
     help="Second Brain CLI - Manage your note-taking system",
     add_completion=False,
 )
@@ -108,6 +112,88 @@ def _find_vault_root() -> Optional[Path]:
     return None
 
 
+def _sanitize_filename(title: str) -> str:
+    """Convert a title to a safe filename.
+
+    Removes special characters and replaces paces with underscores.
+
+    Args:
+        title (str): The title to sanitize.
+
+    Returns:
+        str: A sanitized filename.
+    """
+    filename = title.strip().replace(" ", "_")
+    filename = re.sub(r"[^a-zA-Z0-9\-_]", "", filename)
+    filename = re.sub(r"-+", "-", filename)
+    filename = re.sub(r"_+", "_", filename)
+    filename = filename.strip("-_")
+
+    if not filename:
+        filename = "untitled"
+
+    return filename.lower()
+
+
+@app.command()
+def new(
+    title: Annotated[Optional[str], typer.Argument(help="Title for the new note.")] = None,
+    vault_path: Annotated[Optional[Path], typer.Option("--path", "-p", help="Path to the Obsidian vault.")] = None,
+    config_file: Annotated[Path, typer.Option("--config", "-c", help="Path to the sb config file.")] = "~/.sb_config.yml",
+) -> None:
+    """Create a new note in the inbox folder.
+
+    Examples:
+        sb new "My New Note"
+        sb new --path ~/Documents/ObsidianVault
+    """
+    try:
+        config = _load_config(Path(config_file), vault_path)
+    except InvalidVaultError as exc:
+        print(f":cross_mark: [bold red]{exc}[/bold red]")
+        raise typer.Exit(code=1) from exc
+
+    if not title:
+        title = Prompt.ask(":spiral_notepad: Enter the title of the new note")
+
+    note_filename = _sanitize_filename(title)
+    if not note_filename.endswith(".md"):
+        note_filename += ".md"
+
+    inbox_path = config.vault_path / config.inbox_folder
+    inbox_path.mkdir(exist_ok=True)
+
+    note_path = inbox_path / note_filename
+
+    counter = 1
+    original_path = note_path
+    while note_path.exists():
+        name_without_ext = original_path.stem
+        note_filename = f"{name_without_ext}_{counter}.md"
+        note_path = inbox_path / note_filename
+        counter += 1
+
+    created_date = datetime.now().strftime("%Y-%m-%d")
+    created_time = datetime.now().strftime("%H:%M")
+
+    content = textwrap.dedent(f"""\
+            # {title}
+
+            ---
+            **Created**: {created_date} at {created_time}**
+            **Tags**:""")
+
+    try:
+        with note_path.open("w", encoding="utf-8") as f:
+            f.write(content)
+    except Exception as exc:
+        print(f":cross_mark: [bold red]Failed to create note: {exc}[/bold red]")
+        raise typer.Exit(code=1) from exc
+
+    relative_path = note_path.relative_to(config.vault_path)
+    print(f":white_check_mark: [green]Note created:[/green] {relative_path}")
+
+
 @app.command()
 def info(
     vault_path: Annotated[Optional[Path], typer.Option("--path", "-p", help="Path to the Obsidian vault.")] = None,
@@ -118,7 +204,7 @@ def info(
         config = _load_config(Path(config_file), vault_path)
     except InvalidVaultError as exc:
         print(f":cross_mark: [bold red]{exc}[/bold red]")
-        return
+        raise typer.Exit(code=1) from exc
 
     print(f":brain: Second Brain Vault: [green]{config.vault_path}[/green]")
 

@@ -60,3 +60,19 @@ def sanitize_filename(title: str) -> str:
         filename = "untitled"
 
     return filename.lower()
+
+
+def format_hashtags(hashtags: Optional[str]) -> str:
+    """Format a comma-separated string of hashtags into a space-separated string.
+
+    Args:
+        hashtags (Optional[str]): Comma-separated hashtags.
+
+    Returns:
+        str: Space-separated hashtags prefixed with '#'.
+    """
+    if not hashtags:
+        return ""
+
+    tags = [tag.strip() for tag in hashtags.split(",") if tag.strip()]
+    return " ".join(f"#{tag}" for tag in tags)

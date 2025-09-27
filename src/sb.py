@@ -15,7 +15,7 @@ import typer
 from typing_extensions import Annotated
 
 from config import InvalidVaultError, load_config
-from utils import sanitize_filename
+from utils import format_hashtags, sanitize_filename
 import journal
 
 app = typer.Typer(
@@ -32,6 +32,7 @@ def new(
     title: Annotated[Optional[str], typer.Argument(help="Title for the new note.")] = None,
     vault_path: Annotated[Optional[Path], typer.Option("--path", "-p", help="Path to the Obsidian vault.")] = None,
     config_file: Annotated[Path, typer.Option("--config", "-c", help="Path to the sb config file.")] = "~/.sb_config.yml",
+    tags: Annotated[Optional[str], typer.Option("--tags", "-t", help="Comma-separated tags to include in the note.")] = None,
 ) -> None:
     """Create a new empty note in the inbox folder."""
     try:
@@ -68,7 +69,7 @@ def new(
 
             ---
             **Created**: {created_date} at {created_time}
-            **Tags**:""")
+            **Tags**: {format_hashtags(tags)}""")
 
     try:
         with note_path.open("w", encoding="utf-8") as f:

@@ -17,6 +17,7 @@ from typing_extensions import Annotated
 from config import InvalidVaultError, load_config
 from utils import format_hashtags, sanitize_filename
 import journal
+import bible
 
 app = typer.Typer(
     name="sb",
@@ -25,6 +26,7 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 app.add_typer(journal.app, name="journal")
+app.add_typer(bible.app, name="bible")
 
 
 @app.command()

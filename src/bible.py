@@ -96,6 +96,148 @@ KJV_BIBLE_BOOKS = [
 ]
 
 
+def _is_valid_chapter(book: str, chapter: int) -> bool:
+    """Check if a book is valid and return the number of chapters."""
+    all_books = {b.lower() for b, _ in KJV_BIBLE_BOOKS}
+    return book.lower() in all_books and 1 <= chapter <= dict(KJV_BIBLE_BOOKS)[book]
+
+
+def _is_old_testament(book: str) -> bool:
+    """Check if a book is in the Old Testament."""
+    old_testament_books = {b.lower() for b, _ in KJV_BIBLE_BOOKS[:39]}
+    return book.lower() in old_testament_books
+
+
+def _is_pentateuch(book: str) -> bool:
+    """Check if a book is in the Pentateuch."""
+    pentateuch_books = {b.lower() for b, _ in KJV_BIBLE_BOOKS[:5]}
+    return book.lower() in pentateuch_books
+
+
+def _is_history(book: str) -> bool:
+    """Check if a book is in the Historical books of the Old Testament."""
+    history_books = {b.lower() for b, _ in KJV_BIBLE_BOOKS[5:17]}
+    return book.lower() in history_books or _is_gospel(book) or book.lower() == "acts"
+
+
+def _is_poetry(book: str) -> bool:
+    """Check if a book is in the Poetic books of the Old Testament."""
+    poetry_books = {b.lower() for b, _ in KJV_BIBLE_BOOKS[17:22]}
+    return book.lower() in poetry_books
+
+
+def _is_major_prophets(book: str) -> bool:
+    """Check if a book is in the Major Prophets of the Old Testament."""
+    major_prophets_books = {b.lower() for b, _ in KJV_BIBLE_BOOKS[22:27]}
+    return book.lower() in major_prophets_books
+
+
+def _is_minor_prophets(book: str) -> bool:
+    """Check if a book is in the Minor Prophets of the Old Testament."""
+    minor_prophets_books = {b.lower() for b, _ in KJV_BIBLE_BOOKS[27:39]}
+    return book.lower() in minor_prophets_books
+
+
+def _is_prophetic(book: str) -> bool:
+    """Check if a book is in the Prophetic books of the Old Testament."""
+    return _is_major_prophets(book) or _is_minor_prophets(book) or book.lower() == "revelation"
+
+
+def _is_new_testament(book: str) -> bool:
+    """Check if a book is in the New Testament."""
+    new_testament_books = {b.lower() for b, _ in KJV_BIBLE_BOOKS[39:]}
+    return book.lower() in new_testament_books
+
+
+def _is_synoptic_gospels(book: str) -> bool:
+    """Check if a book is in the Synoptic Gospels of the New Testament."""
+    synoptic_gospels_books = {b.lower() for b, _ in KJV_BIBLE_BOOKS[39:42]}
+    return book.lower() in synoptic_gospels_books
+
+
+def _is_gospel(book: str) -> bool:
+    """Check if a book is in the Gospels of the New Testament."""
+    return _is_synoptic_gospels(book) or book.lower() == "john"
+
+
+def _is_pauline_letters(book: str) -> bool:
+    """Check if a book is in the Pauline Letters of the New Testament."""
+    pauline_letters_books = {b.lower() for b, _ in KJV_BIBLE_BOOKS[44:57]}
+    return book.lower() in pauline_letters_books
+
+
+def _is_prison_letters(book: str) -> bool:
+    """Check if a book is in the Prison Letters of the New Testament."""
+    prison_letters_books = {b.lower() for b, _ in KJV_BIBLE_BOOKS[48:51]}
+    return book.lower() in prison_letters_books or book.lower() == "philemon"
+
+
+def _is_pastoral_letters(book: str) -> bool:
+    """Check if a book is in the Pastoral Letters of the New Testament."""
+    pastoral_letters_books = {b.lower() for b, _ in KJV_BIBLE_BOOKS[53:56]}
+    return book.lower() in pastoral_letters_books
+
+
+def _is_general_letters(book: str) -> bool:
+    """Check if a book is in the General Letters of the New Testament."""
+    general_letters_books = {b.lower() for b, _ in KJV_BIBLE_BOOKS[58:65]}
+    return book.lower() in general_letters_books
+
+
+def _is_letters(book: str) -> bool:
+    """Check if a book is in the Letters of the New Testament."""
+    return _is_pauline_letters(book) or _is_general_letters(book) or book.lower() == "hebrews"
+
+
+def _get_links(book: str, chapter: int) -> tuple[str, str, list[str]]:
+    """Get the previous and next chapter links for a given book and chapter.
+
+    Args:
+        book (str): The book of the Bible.
+        chapter (int): The chapter number.
+
+    Returns:
+        tuple[str, str, list[str]]: A tuple containing the previous and next chapter links as well as other links to relevant notes.
+    """
+    previous_chapter, next_chapter = _get_adjacent_chapters(book, chapter)
+    prev_link = f"[[{previous_chapter}]]" if previous_chapter else "N/A"
+    next_link = f"[[{next_chapter}]]" if next_chapter else "N/A"
+
+    misc_links = ["the_bible"]
+    if _is_old_testament(book):
+        misc_links.append("old_testament")
+    if _is_pentateuch(book):
+        misc_links.append("pentateuch")
+    if _is_history(book):
+        misc_links.append("historical_books")
+    if _is_poetry(book):
+        misc_links.append("poetic_books")
+    if _is_major_prophets(book):
+        misc_links.append("major_prophets")
+    if _is_minor_prophets(book):
+        misc_links.append("minor_prophets")
+    if _is_prophetic(book):
+        misc_links.append("prophetic_books")
+    if _is_new_testament(book):
+        misc_links.append("new_testament")
+    if _is_synoptic_gospels(book):
+        misc_links.append("synoptic_gospels")
+    if _is_gospel(book):
+        misc_links.append("gospels")
+    if _is_pauline_letters(book):
+        misc_links.append("pauline_letters")
+    if _is_prison_letters(book):
+        misc_links.append("prison_letters")
+    if _is_pastoral_letters(book):
+        misc_links.append("pastoral_letters")
+    if _is_general_letters(book):
+        misc_links.append("general_letters")
+    if _is_letters(book):
+        misc_links.append("letters")
+
+    return prev_link, next_link, misc_links
+
+
 def _format_book_name(book: str) -> str:
     """Format the book name to match the note naming convention.
 
@@ -165,6 +307,10 @@ def chapter(
         print(f":cross_mark: [bold red]{exc}[/bold red]")
         raise typer.Exit(code=1) from exc
 
+    if not _is_valid_chapter(book, chapter):
+        print(f":cross_mark: [bold red]{book} chapter {chapter} is not a valid chapter of the Bible.[/bold red]")
+        raise typer.Exit(code=1)
+
     bible_path = config.vault_path / "1_Projects/Bible-Study"
     bible_path.mkdir(parents=True, exist_ok=True)
 
@@ -175,9 +321,7 @@ def chapter(
         print(f":information: [yellow]Chapter summary for {book} chapter {chapter} already exists.[/yellow]")
         raise typer.Exit(code=0)
 
-    previous_chapter, next_chapter = _get_adjacent_chapters(book, chapter)
-    prev = f"[[{previous_chapter}]]" if previous_chapter else "N/A"
-    nxt = f"[[{next_chapter}]]" if next_chapter else "N/A"
+    prev, nxt, misc_links = _get_links(book, chapter)
 
     content = textwrap.dedent(f"""\
             # {book} | Chapter {chapter}
@@ -200,7 +344,9 @@ def chapter(
 
             **Tags**: #bible #{_format_book_name(book)} #chapter{chapter} {format_hashtags(tags)}
             **Next**: {nxt}
-            **Previous**: {prev}""")
+            **Previous**: {prev}
+
+            {" ".join(f"[[{link}]]" for link in misc_links)}""")
 
     try:
         with note_path.open("w", encoding="utf-8") as f:

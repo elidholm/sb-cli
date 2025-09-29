@@ -379,7 +379,7 @@ def daily(
     content = textwrap.dedent(f"""\
             # {todays_date}
 
-            # Daily Goals
+            ## Daily Goals
 
             - [ ] 15 minutes of touch typing practice
             - [ ] Review and prioritize tasks for the day

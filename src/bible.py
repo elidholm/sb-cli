@@ -323,7 +323,7 @@ def chapter(
     bible_path.mkdir(parents=True, exist_ok=True)
 
     date_read = date_read or datetime.now().strftime("%Y-%m-%d")
-    note_path = bible_path / f"{_format_book_name(book)}_{chapter}.md"
+    note_path = bible_path / f"{_format_book_name(book)}_{chapter:02}.md"
 
     if note_path.exists():
         print(f":information: [yellow]Chapter summary for {book} chapter {chapter} already exists.[/yellow]")

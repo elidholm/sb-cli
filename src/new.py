@@ -13,7 +13,7 @@ import typer
 from typing_extensions import Annotated
 
 from config import InvalidVaultError, load_config
-from utils import format_hashtags, sanitize_filename
+from utils import daily_exists, format_hashtags, sanitize_filename
 import journal
 import bible
 
@@ -42,6 +42,7 @@ def new_callback(ctx: typer.Context):
 
 @app.command()
 def empty(
+    ctx: typer.Context,
     title: Annotated[Optional[str], typer.Argument(help="Title for the new note.")] = None,
     vault_path: Annotated[Optional[Path], typer.Option("--path", "-p", help="Path to the Obsidian vault.")] = None,
     config_file: Annotated[Path, typer.Option("--config", "-c", help="Path to the sb config file.")] = "~/.sb_config.yml",
@@ -76,6 +77,13 @@ def empty(
 
     created_date = datetime.now().strftime("%Y-%m-%d")
     created_time = datetime.now().strftime("%H:%M")
+
+    daily_path = config.vault_path / "2_Areas/Journal/Daily"
+    if not daily_exists(datetime.now(), daily_path):
+        if Confirm.ask("Create a daily note for today?", default=True):
+            ctx.invoke(journal.daily)
+        else:
+            print("You can create a daily note later using 'sb new journal daily'.")
 
     content = textwrap.dedent(f"""\
             # {title}

@@ -4,7 +4,6 @@ CLI tool to create Bible study notes in an Obsidian vault.
 """
 
 from datetime import datetime
-from datetime import timedelta
 from pathlib import Path
 from typing import Optional
 from rich import print
@@ -97,9 +96,14 @@ KJV_BIBLE_BOOKS = [
 
 
 def _is_valid_chapter(book: str, chapter: int) -> bool:
-    """Check if a book is valid and return the number of chapters."""
+    """Check if a chapter is valid for a given book."""
+    return 1 <= chapter <= dict(KJV_BIBLE_BOOKS).get(book, 0)
+
+
+def _is_valid_book(book: str) -> bool:
+    """Check if a book is valid."""
     all_books = {b.lower() for b, _ in KJV_BIBLE_BOOKS}
-    return book.lower() in all_books and 1 <= chapter <= dict(KJV_BIBLE_BOOKS)[book]
+    return book.lower() in all_books
 
 
 def _is_old_testament(book: str) -> bool:
@@ -307,8 +311,12 @@ def chapter(
         print(f":cross_mark: [bold red]{exc}[/bold red]")
         raise typer.Exit(code=1) from exc
 
+    if not _is_valid_book(book):
+        print(f":cross_mark: [bold red]{book} is not a valid book of the Bible.[/bold red]")
+        raise typer.Exit(code=1)
+
     if not _is_valid_chapter(book, chapter):
-        print(f":cross_mark: [bold red]{book} chapter {chapter} is not a valid chapter of the Bible.[/bold red]")
+        print(f":cross_mark: [bold red]Chapter {chapter} is not valid for the book of {book}.[/bold red]")
         raise typer.Exit(code=1)
 
     bible_path = config.vault_path / "1_Projects/Bible-Study"

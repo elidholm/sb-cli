@@ -11,22 +11,18 @@ Functions:
 import re
 from pathlib import Path
 from typing import Optional
-from datetime import datetime
 
 
-def daily_exists(date: datetime, daily_path: Path) -> bool:
+def daily_exists(daily_path: Path) -> bool:
     """Check if a daily note for the given date already exists in the inbox.
 
     Args:
-        date (datetime): The date to check for.
         daily_path (Path): The path to the daily notes directory.
 
     Returns:
         bool: True if the daily note exists, False otherwise.
     """
-    daily_filename = date.strftime("%Y-%m-%d") + ".md"
-    daily_file_path = daily_path / daily_filename
-    return daily_file_path.exists()
+    return daily_path.exists()
 
 
 def find_vault_root(vault_name: str) -> Optional[Path]:

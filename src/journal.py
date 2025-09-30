@@ -420,7 +420,10 @@ def daily(
             **Weather**:
             **Tags**: #daily-journal #reflection {format_hashtags(tags)}
             **Yesterday**: [[{(datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')}]]
-            **Tomorrow**: [[{(datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')}]]""")
+            **Tomorrow**: [[{(datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')}]]
+
+            ---
+            """)
 
     try:
         with note_path.open("w", encoding="utf-8") as f:

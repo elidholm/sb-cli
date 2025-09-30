@@ -78,8 +78,8 @@ def empty(
     created_date = datetime.now().strftime("%Y-%m-%d")
     created_time = datetime.now().strftime("%H:%M")
 
-    daily_path = config.vault_path / "2_Areas/Journal/Daily"
-    if not daily_exists(datetime.now(), daily_path):
+    daily_path = config.vault_path / "2_Areas/Journal/Daily" / (created_date + ".md")
+    if not daily_exists(daily_path):
         if Confirm.ask("Create a daily note for today?", default=True):
             ctx.invoke(journal.daily)
         else:
@@ -95,6 +95,9 @@ def empty(
     try:
         with note_path.open("w", encoding="utf-8") as f:
             f.write(content)
+        with daily_path.open("a", encoding="utf-8") as f:
+            f.write(f"[[{note_filename}]]")
+
     except Exception as exc:
         print(f":cross_mark: [bold red]Failed to create note: {exc}[/bold red]")
         raise typer.Exit(code=1) from exc

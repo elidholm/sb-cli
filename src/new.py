@@ -80,10 +80,8 @@ def empty(
 
     daily_path = config.vault_path / "2_Areas/Journal/Daily" / (created_date + ".md")
     if not daily_exists(daily_path):
-        if Confirm.ask("Create a daily note for today?", default=True):
-            ctx.invoke(journal.daily)
-        else:
-            print("You can create a daily note later using 'sb new journal daily'.")
+        ctx.invoke(journal.daily)
+        print(f":spiral_notepad: [yellow]Created daily note for {created_date}.[/yellow]")
 
     content = textwrap.dedent(f"""\
             # {title}

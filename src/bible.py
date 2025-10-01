@@ -7,13 +7,16 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 from rich import print
+from rich.prompt import Confirm
 import textwrap
 
 import typer
 from typing_extensions import Annotated
 
 from config import InvalidVaultError, load_config
-from utils import format_hashtags
+from utils import daily_exists, format_hashtags
+
+import journal
 
 app = typer.Typer(
     name="bible",
@@ -297,6 +300,7 @@ def _get_adjacent_chapters(book: str, chapter: int) -> tuple[Optional[str], Opti
 
 @app.command()
 def chapter(
+    ctx: typer.Context,
     book: Annotated[str, typer.Argument(help="Book of the Bible (e.g., Genesis).")],
     chapter: Annotated[int, typer.Argument(help="Chapter number.")],
     date_read: Annotated[Optional[str], typer.Option("--date", "-d", help="Date when the chapter was read (YYYY-MM-DD).")] = None,
@@ -323,11 +327,18 @@ def chapter(
     bible_path.mkdir(parents=True, exist_ok=True)
 
     date_read = date_read or datetime.now().strftime("%Y-%m-%d")
-    note_path = bible_path / f"{_format_book_name(book)}_{chapter:02}.md"
+
+    note_filename = f"{_format_book_name(book)}_{chapter:02}.md"
+    note_path = bible_path / note_filename
 
     if note_path.exists():
         print(f":information: [yellow]Chapter summary for {book} chapter {chapter} already exists.[/yellow]")
         raise typer.Exit(code=0)
+
+    daily_path = config.vault_path / "2_Areas/Journal/Daily" / f"{date_read}.md"
+    if not daily_exists(daily_path):
+        ctx.invoke(journal.daily)
+        print(f":spiral_notepad: [yellow]Created daily note for {date_read}.[/yellow]")
 
     prev, nxt, misc_links = _get_links(book, chapter)
 
@@ -359,6 +370,9 @@ def chapter(
     try:
         with note_path.open("w", encoding="utf-8") as f:
             f.write(content)
+        with daily_path.open("a", encoding="utf-8") as f:
+            f.write(f"[[{note_filename}]]")
+
     except Exception as exc:
         print(f":cross_mark: [bold red]Failed to create chapter summary: {exc}[/bold red]")
         raise typer.Exit(code=1) from exc

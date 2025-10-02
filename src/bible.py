@@ -323,7 +323,7 @@ def chapter(
         print(f":cross_mark: [bold red]Chapter {chapter} is not valid for the book of {book}.[/bold red]")
         raise typer.Exit(code=1)
 
-    bible_path = config.vault_path / "1_Projects/Bible-Study"
+    bible_path = config.vault_path / "1_Projects/Bible-Study" / book.title()
     bible_path.mkdir(parents=True, exist_ok=True)
 
     date_read = date_read or datetime.now().strftime("%Y-%m-%d")
@@ -364,6 +364,8 @@ def chapter(
             **Tags**: #bible #{_format_book_name(book)} #chapter{chapter} {format_hashtags(tags)}
             **Next**: {nxt}
             **Previous**: {prev}
+
+            ---
 
             {" ".join(f"[[{link}]]" for link in misc_links)}""")
 

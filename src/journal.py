@@ -259,86 +259,90 @@ def weekly(
 
     created_date = datetime.now().strftime("%Y-%m-%d")
 
+    inbox_path = config.vault_path / config.inbox_folder
+    if inbox_path.exists() and inbox_path.is_dir():
+        inbox_files = [path.stem for path in list(inbox_path.glob("*.md"))]
+
+    items_to_process = "\n".join(f"- [ ] [[{item}]] → Move to:" for item in inbox_files) if inbox_files else "- [ ] No items in inbox."
+
     content = textwrap.dedent(f"""\
-            # Week {this_week.replace('-', ' - ')} Review
+# Week {this_week.replace('-', ' - ')} Review
 
-            **Review Date**: {created_date}
-            **Energy This Week**: /10
-            **Overall Rating**: /10
+**Review Date**: {created_date}
+**Energy This Week**: /10
+**Overall Rating**: /10
 
-            ## Inbox Processing
+## Inbox Processing
 
-            ### Items to Process:
+### Items to Process:
 
-            - [ ] Note 1 → Move to:
-            - [ ] Note 2 → Move to:
-            - [ ] Note 3 → Move to:
+{items_to_process}
 
-            ## Projects Review
+## Projects Review
 
-            ### Active Projects Status:
+### Active Projects Status:
 
-            | Project | Status | Next Action | Priority |
-            |---------|--------|-------------|----------|
-            |         | 🟢/🟡/🔴 |            | H/M/L    |
-            |         | 🟢/🟡/🔴 |            | H/M/L    |
+| Project | Status | Next Action | Priority |
+|---------|--------|-------------|----------|
+|         | 🟢/🟡/🔴 |            | H/M/L    |
+|         | 🟢/🟡/🔴 |            | H/M/L    |
 
-            ### Projects to Archive:
+### Projects to Archive:
 
-            - [ ] Completed project 1
-            - [ ] Stalled project 2
+- [ ] Completed project 1
+- [ ] Stalled project 2
 
-            ## Areas Review
+## Areas Review
 
-            ### Health Check:
+### Health Check:
 
-            | Area | Current State | Needs Attention? | Action |
-            |------|---------------|------------------|--------|
-            |      | 🟢/🟡/🔴      | Yes/No          |        |
-            |      | 🟢/🟡/🔴      | Yes/No          |        |
+| Area | Current State | Needs Attention? | Action |
+|------|---------------|------------------|--------|
+|      | 🟢/🟡/🔴      | Yes/No          |        |
+|      | 🟢/🟡/🔴      | Yes/No          |        |
 
-            ## Wins This Week
+## Wins This Week
 
-            -
+-
 
-            ## Challenges & Lessons
+## Challenges & Lessons
 
-            ### What didn't go as planned?
+### What didn't go as planned?
 
-            ### What did I learn?
+### What did I learn?
 
-            ### What would I do differently?
+### What would I do differently?
 
-            ## Next Week Planning
+## Next Week Planning
 
-            ### Top 3 Priorities:
+### Top 3 Priorities:
 
-            1.
-            2.
-            3.
+1.
+2.
+3.
 
-            ### Calendar & Commitments Review:
+### Calendar & Commitments Review:
 
-            <!-- Check upcoming meetings, deadlines, appointments -->
+<!-- Check upcoming meetings, deadlines, appointments -->
 
-            ### Areas Needing Focus:
+### Areas Needing Focus:
 
-            -
-            -
+-
+-
 
-            ## Learning & Growth
+## Learning & Growth
 
-            ### This week I learned:
+### This week I learned:
 
-            ### Books/Articles read:
+### Books/Articles read:
 
-            ### Skills practiced:
+### Skills practiced:
 
-            ---
+---
 
-            **Tags**: #weekly-review #reflection {format_hashtags(tags)}
-            **Previous Week**: [[{(datetime.now() - timedelta(weeks=1)).strftime('%W-%Y')}]]
-            **Next Week**: [[{(datetime.now() + timedelta(weeks=1)).strftime('%W-%Y')}]]""")
+**Tags**: #weekly-review #reflection {format_hashtags(tags)}
+**Previous Week**: [[{(datetime.now() - timedelta(weeks=1)).strftime('%W-%Y')}]]
+**Next Week**: [[{(datetime.now() + timedelta(weeks=1)).strftime('%W-%Y')}]]""")
 
     try:
         with note_path.open("w", encoding="utf-8") as f:

@@ -100,7 +100,7 @@ def sync(
                 git_repo.git.rebase("--abort")
                 print("\tRebase aborted.")
             except Exception:
-                print(f"\t:warning: [yellow]Failed to abort rebase. Manual intervention may be needed.[/yellow]")
+                print("\t:warning: [yellow]Failed to abort rebase. Manual intervention may be needed.[/yellow]")
             raise typer.Exit(code=1) from exc
 
         print(f"\n:arrow_up: Pushing to 'origin/[cyan]{branch}[/cyan]'...")
@@ -123,8 +123,6 @@ def sync(
     except Exception as exc:
         print(f":cross_mark: [bold red]Unexpected error: {exc}[/bold red]")
         raise typer.Exit(code=1) from exc
-
-
 
 
 @app.command()

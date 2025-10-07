@@ -87,6 +87,7 @@ def empty(
             # {title}
 
             ---
+
             **Created**: {created_date} at {created_time}
             **Tags**: {format_hashtags(tags)}""")
 

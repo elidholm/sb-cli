@@ -250,7 +250,7 @@ def weekly(
     weekly_path = config.vault_path / "2_Areas/Journal/Weekly-Review"
     weekly_path.mkdir(parents=True, exist_ok=True)
 
-    this_week = datetime.now().strftime("%W-%Y")
+    this_week = f"{int(datetime.now().strftime('%W'))+1}-{datetime.now().strftime('%Y')}"
     note_path = weekly_path / f"{this_week}.md"
 
     if note_path.exists():

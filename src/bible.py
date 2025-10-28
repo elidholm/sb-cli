@@ -3,20 +3,18 @@ CLI tool to create Bible study notes in an Obsidian vault.
 ----------------------------------------------------------
 """
 
+import textwrap
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
-from rich import print
-from rich.prompt import Confirm
-import textwrap
 
 import typer
+from rich import print
 from typing_extensions import Annotated
 
+import journal
 from config import InvalidVaultError, load_config
 from utils import daily_exists, format_hashtags
-
-import journal
 
 app = typer.Typer(
     name="bible",
@@ -66,7 +64,6 @@ KJV_BIBLE_BOOKS = [
     ("Haggai", 2),
     ("Zechariah", 14),
     ("Malachi", 4),
-
     # New Testament
     ("Matthew", 28),
     ("Mark", 16),
@@ -267,8 +264,8 @@ def _get_adjacent_chapters(book: str, chapter: int) -> tuple[Optional[str], Opti
     Returns:
         tuple[Optional[str], Optional[str]]: A tuple containing the previous and next chapter references.
     """
-    book_index = None
-    current_book_chapters = None
+    book_index = -1
+    current_book_chapters = 0
 
     for i, (b, chapters) in enumerate(KJV_BIBLE_BOOKS):
         if b.lower() == book.lower():
@@ -276,7 +273,7 @@ def _get_adjacent_chapters(book: str, chapter: int) -> tuple[Optional[str], Opti
             current_book_chapters = chapters
             break
 
-    if book_index is None:
+    if book_index < 0:
         return None, None
     if chapter < 1 or chapter > current_book_chapters:
         return None, None
@@ -303,10 +300,16 @@ def chapter(
     ctx: typer.Context,
     book: Annotated[str, typer.Argument(help="Book of the Bible (e.g., Genesis).")],
     chapter: Annotated[int, typer.Argument(help="Chapter number.")],
-    date_read: Annotated[Optional[str], typer.Option("--date", "-d", help="Date when the chapter was read (YYYY-MM-DD).")] = None,
+    date_read: Annotated[
+        Optional[str], typer.Option("--date", "-d", help="Date when the chapter was read (YYYY-MM-DD).")
+    ] = None,
     vault_path: Annotated[Optional[Path], typer.Option("--path", "-p", help="Path to the Obsidian vault.")] = None,
-    config_file: Annotated[Path, typer.Option("--config", "-c", help="Path to the sb config file.")] = "~/.sb_config.yml",
-    tags: Annotated[Optional[str], typer.Option("--tags", "-t", help="Comma-separated tags to include in the note.")] = None,
+    config_file: Annotated[
+        str, typer.Option("--config", "-c", help="Path to the sb config file.")
+    ] = "~/.sb_config.yml",
+    tags: Annotated[
+        Optional[str], typer.Option("--tags", "-t", help="Comma-separated tags to include in the note.")
+    ] = None,
 ) -> None:
     """Create a new Bible chapter summary."""
     try:

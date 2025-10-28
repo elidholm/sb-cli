@@ -2,20 +2,20 @@
 CLI tool for creating new notes in an Obsidian vault.
 """
 
+import textwrap
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
-from rich import print
-from rich.prompt import Confirm, Prompt
-import textwrap
 
 import typer
+from rich import print
+from rich.prompt import Confirm, Prompt
 from typing_extensions import Annotated
 
+import bible
+import journal
 from config import InvalidVaultError, load_config
 from utils import daily_exists, format_hashtags, sanitize_filename
-import journal
-import bible
 
 app = typer.Typer(
     name="new",
@@ -45,8 +45,12 @@ def empty(
     ctx: typer.Context,
     title: Annotated[Optional[str], typer.Argument(help="Title for the new note.")] = None,
     vault_path: Annotated[Optional[Path], typer.Option("--path", "-p", help="Path to the Obsidian vault.")] = None,
-    config_file: Annotated[Path, typer.Option("--config", "-c", help="Path to the sb config file.")] = "~/.sb_config.yml",
-    tags: Annotated[Optional[str], typer.Option("--tags", "-t", help="Comma-separated tags to include in the note.")] = None,
+    config_file: Annotated[
+        str, typer.Option("--config", "-c", help="Path to the sb config file.")
+    ] = "~/.sb_config.yml",
+    tags: Annotated[
+        Optional[str], typer.Option("--tags", "-t", help="Comma-separated tags to include in the note.")
+    ] = None,
 ) -> None:
     """Create a new empty note in the inbox folder."""
     try:

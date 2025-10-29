@@ -87,7 +87,10 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
-"tests/*" = ["S101"]  # Allow asserts in tests
+"tests/*" = [
+    "S101",  # Allow asserts in tests
+    "B017",  # Allow asserting generic exceptions in tests
+]
 
 [tool.mypy]
 python_version = "3.10"

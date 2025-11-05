@@ -394,11 +394,14 @@ class TestCommandLineInterface(unittest.TestCase):
         """Set up CLI runner."""
         self.runner = CliRunner()
 
+    @patch("sb.git.Repo")
     @patch("sb.sync")
-    def test_cli_sync_command(self, mock_sync):
+    def test_cli_sync_command(self, mock_sync, mock_repo_class):
         """Test that CLI calls sync command properly."""
         # Test sync command with arguments
         result = self.runner.invoke(app, ["sync", "master", "-m", "CLI test commit"])
+
+        print(f"{result.output=}")
 
         # Verify sync was called (though it will fail without proper setup)
         self.assertEqual(result.exit_code, 0)
@@ -408,6 +411,8 @@ class TestCommandLineInterface(unittest.TestCase):
         """Test that CLI calls info command properly."""
         # Test info command
         result = self.runner.invoke(app, ["info"])
+
+        print(f"{result.output=}")
 
         # Verify info was called
         self.assertEqual(result.exit_code, 0)

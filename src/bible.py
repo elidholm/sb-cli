@@ -295,7 +295,7 @@ def _get_adjacent_chapters(book: str, chapter: int) -> tuple[Optional[str], Opti
     return previous_chapter, next_chapter
 
 
-@app.command()
+@app.command(name="chapter")
 def chapter(
     ctx: typer.Context,
     book: Annotated[str, typer.Argument(help="Book of the Bible (e.g., Genesis).")],

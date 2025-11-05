@@ -115,12 +115,12 @@ class TestEmptyCommand(unittest.TestCase):
 class TestCLIInterface(unittest.TestCase):
     """Test the CLI interface using CliRunner."""
 
-    @patch("new.journal.app")
-    def test_cli_journal_subcommand(self, mock_journal_app):
-        """Test CLI journal subcommand is available."""
-        self.assertIn("journal", [group.name for group in app.registered_groups])
-
-    @patch("new.bible.app")
-    def test_cli_bible_subcommand(self, mock_bible_app):
-        """Test CLI bible subcommand is available."""
-        self.assertIn("bible", [group.name for group in app.registered_groups])
+    @parameterized.expand(
+        [
+            ("journal",),
+            ("bible",),
+        ]
+    )
+    def test_cli_subcommand_existence(self, subcommand):
+        """Test that specified subcommands exist in the CLI."""
+        self.assertIn(subcommand, [grp.name for grp in app.registered_groups])

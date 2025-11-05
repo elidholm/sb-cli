@@ -22,7 +22,7 @@ app = typer.Typer(
 )
 
 
-@app.command()
+@app.command(name="monthly")
 def monthly(
     vault_path: Annotated[Optional[Path], typer.Option("--path", "-p", help="Path to the Obsidian vault.")] = None,
     config_file: Annotated[
@@ -237,7 +237,7 @@ def monthly(
     print(f":white_check_mark: [green]Monthly reflection created:[/green] {relative_path}")
 
 
-@app.command()
+@app.command(name="weekly")
 def weekly(
     vault_path: Annotated[Optional[Path], typer.Option("--path", "-p", help="Path to the Obsidian vault.")] = None,
     config_file: Annotated[
@@ -364,7 +364,7 @@ def weekly(
     print(f":white_check_mark: [green]Weekly review created:[/green] {relative_path}")
 
 
-@app.command()
+@app.command(name="daily")
 def daily(
     vault_path: Annotated[Optional[Path], typer.Option("--path", "-p", help="Path to the Obsidian vault.")] = None,
     config_file: Annotated[

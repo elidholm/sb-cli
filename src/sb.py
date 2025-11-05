@@ -29,7 +29,7 @@ app = typer.Typer(
 app.add_typer(new.app, name="new")
 
 
-@app.command()
+@app.command(name="sync")
 def sync(
     branch: Annotated[str, typer.Argument(help="Git branch to sync with.")] = "master",
     message: Annotated[
@@ -133,7 +133,7 @@ def sync(
         raise typer.Exit(code=1) from exc
 
 
-@app.command()
+@app.command(name="info")
 def info(
     vault_path: Annotated[Optional[Path], typer.Option("--path", "-p", help="Path to the Obsidian vault.")] = None,
     config_file: Annotated[

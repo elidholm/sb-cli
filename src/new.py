@@ -40,7 +40,7 @@ def new_callback(ctx: typer.Context):
             ctx.exit()
 
 
-@app.command()
+@app.command(name="empty")
 def empty(
     ctx: typer.Context,
     title: Annotated[Optional[str], typer.Argument(help="Title for the new note.")] = None,

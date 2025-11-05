@@ -3,14 +3,13 @@ CLI tool to create daily journal entries in an Obsidian vault.
 --------------------------------------------------------------
 """
 
-from datetime import datetime
-from datetime import timedelta
+import textwrap
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
-from rich import print
-import textwrap
 
 import typer
+from rich import print
 from typing_extensions import Annotated
 
 from config import InvalidVaultError, load_config
@@ -23,11 +22,15 @@ app = typer.Typer(
 )
 
 
-@app.command()
+@app.command(name="monthly")
 def monthly(
     vault_path: Annotated[Optional[Path], typer.Option("--path", "-p", help="Path to the Obsidian vault.")] = None,
-    config_file: Annotated[Path, typer.Option("--config", "-c", help="Path to the sb config file.")] = "~/.sb_config.yml",
-    tags: Annotated[Optional[str], typer.Option("--tags", "-t", help="Comma-separated tags to include in the note.")] = None,
+    config_file: Annotated[
+        str, typer.Option("--config", "-c", help="Path to the sb config file.")
+    ] = "~/.sb_config.yml",
+    tags: Annotated[
+        Optional[str], typer.Option("--tags", "-t", help="Comma-separated tags to include in the note.")
+    ] = None,
 ) -> None:
     """Create a new monthly reflection entry."""
     try:
@@ -49,7 +52,7 @@ def monthly(
     created_date = datetime.now().strftime("%Y-%m-%d")
 
     content = textwrap.dedent(f"""\
-            # {this_month.replace('-', ' - ')} Monthly Reflection
+            # {this_month.replace("-", " - ")} Monthly Reflection
 
             **Review Date**: {created_date}
             **Overall Month Rating**: /10
@@ -220,8 +223,8 @@ def monthly(
             ---
 
             **Tags**: #monthly-review #reflection {format_hashtags(tags)}
-            **Previous Month**: [[{(datetime.now() - timedelta(days=31)).strftime('%b-%Y')}]]
-            **Next Month**: [[{(datetime.now() + timedelta(days=28)).strftime('%b-%Y')}]]""")
+            **Previous Month**: [[{(datetime.now() - timedelta(days=31)).strftime("%b-%Y")}]]
+            **Next Month**: [[{(datetime.now() + timedelta(days=28)).strftime("%b-%Y")}]]""")
 
     try:
         with note_path.open("w", encoding="utf-8") as f:
@@ -234,11 +237,15 @@ def monthly(
     print(f":white_check_mark: [green]Monthly reflection created:[/green] {relative_path}")
 
 
-@app.command()
+@app.command(name="weekly")
 def weekly(
     vault_path: Annotated[Optional[Path], typer.Option("--path", "-p", help="Path to the Obsidian vault.")] = None,
-    config_file: Annotated[Path, typer.Option("--config", "-c", help="Path to the sb config file.")] = "~/.sb_config.yml",
-    tags: Annotated[Optional[str], typer.Option("--tags", "-t", help="Comma-separated tags to include in the note.")] = None,
+    config_file: Annotated[
+        str, typer.Option("--config", "-c", help="Path to the sb config file.")
+    ] = "~/.sb_config.yml",
+    tags: Annotated[
+        Optional[str], typer.Option("--tags", "-t", help="Comma-separated tags to include in the note.")
+    ] = None,
 ) -> None:
     """Create a new weekly review entry."""
     try:
@@ -250,7 +257,7 @@ def weekly(
     weekly_path = config.vault_path / "2_Areas/Journal/Weekly-Review"
     weekly_path.mkdir(parents=True, exist_ok=True)
 
-    this_week = f"{int(datetime.now().strftime('%W'))+1}-{datetime.now().strftime('%Y')}"
+    this_week = f"{int(datetime.now().strftime('%W')) + 1}-{datetime.now().strftime('%Y')}"
     note_path = weekly_path / f"{this_week}.md"
 
     if note_path.exists():
@@ -263,10 +270,12 @@ def weekly(
     if inbox_path.exists() and inbox_path.is_dir():
         inbox_files = [path.stem for path in list(inbox_path.glob("*.md"))]
 
-    items_to_process = "\n".join(f"- [ ] [[{item}]] → Move to:" for item in inbox_files) if inbox_files else "- [ ] No items in inbox."
+    items_to_process = (
+        "\n".join(f"- [ ] [[{item}]] → Move to:" for item in inbox_files) if inbox_files else "- [ ] No items in inbox."
+    )
 
     content = textwrap.dedent(f"""\
-# Week {this_week.replace('-', ' - ')} Review
+# Week {this_week.replace("-", " - ")} Review
 
 **Review Date**: {created_date}
 **Energy This Week**: /10
@@ -341,8 +350,8 @@ def weekly(
 ---
 
 **Tags**: #weekly-review #reflection {format_hashtags(tags)}
-**Previous Week**: [[{(datetime.now() - timedelta(weeks=1)).strftime('%W-%Y')}]]
-**Next Week**: [[{(datetime.now() + timedelta(weeks=1)).strftime('%W-%Y')}]]""")
+**Previous Week**: [[{(datetime.now() - timedelta(weeks=1)).strftime("%W-%Y")}]]
+**Next Week**: [[{(datetime.now() + timedelta(weeks=1)).strftime("%W-%Y")}]]""")
 
     try:
         with note_path.open("w", encoding="utf-8") as f:
@@ -355,11 +364,15 @@ def weekly(
     print(f":white_check_mark: [green]Weekly review created:[/green] {relative_path}")
 
 
-@app.command()
+@app.command(name="daily")
 def daily(
     vault_path: Annotated[Optional[Path], typer.Option("--path", "-p", help="Path to the Obsidian vault.")] = None,
-    config_file: Annotated[Path, typer.Option("--config", "-c", help="Path to the sb config file.")] = "~/.sb_config.yml",
-    tags: Annotated[Optional[str], typer.Option("--tags", "-t", help="Comma-separated tags to include in the note.")] = None,
+    config_file: Annotated[
+        str, typer.Option("--config", "-c", help="Path to the sb config file.")
+    ] = "~/.sb_config.yml",
+    tags: Annotated[
+        Optional[str], typer.Option("--tags", "-t", help="Comma-separated tags to include in the note.")
+    ] = None,
 ) -> None:
     """Create a new daily journal entry."""
     try:
@@ -423,8 +436,8 @@ def daily(
             **Mood**:
             **Weather**:
             **Tags**: #daily-journal #reflection {format_hashtags(tags)}
-            **Yesterday**: [[{(datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')}]]
-            **Tomorrow**: [[{(datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')}]]
+            **Yesterday**: [[{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}]]
+            **Tomorrow**: [[{(datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")}]]
 
             ---
             """)

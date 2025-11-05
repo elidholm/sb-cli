@@ -13,11 +13,11 @@ Functions:
 
 from pathlib import Path
 from typing import Optional, Union
+
 from pydantic import BaseModel
 from pydantic_yaml import parse_yaml_file_as
 
 from utils import find_vault_root
-
 
 # Default Configuration
 VAULT_NAME = "second-brain"
@@ -26,11 +26,13 @@ INBOX_FOLDER = "0_Inbox"
 
 class InvalidVaultError(Exception):
     """Custom exception for invalid vault paths."""
+
     pass
 
 
 class Config(BaseModel):
     """Configuration model for the second-brain CLI."""
+
     vault_path: Optional[Path] = None
     inbox_folder: str = INBOX_FOLDER
 

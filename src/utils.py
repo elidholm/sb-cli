@@ -8,6 +8,7 @@ Functions:
     - sanitize_filename: Convert titles to safe filenames.
     - format_hashtags: Format a string of hashtags.
 """
+
 import re
 from pathlib import Path
 from typing import Optional
@@ -36,18 +37,16 @@ def find_vault_root(vault_name: str) -> Optional[Path]:
     """
     current = Path.cwd()
 
-    # Search up the directory tree
-    while current != current.parent:
-        potential_vault = current / vault_name
-        if potential_vault.exists() and potential_vault.is_dir():
-            return potential_vault
-        current = current.parent
+    if not vault_name:
+        return None
 
-    # Also check if we're already inside the vault
-    current = Path.cwd()
+    # Search up the directory tree
     while current != current.parent:
         if current.name == vault_name:
             return current
+        potential_vault = current / vault_name
+        if potential_vault.exists() and potential_vault.is_dir():
+            return potential_vault
         current = current.parent
 
     return None

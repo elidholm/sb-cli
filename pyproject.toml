@@ -1,0 +1,101 @@
+[project]
+name = "sb-cli"
+version = "0.1.0"
+description = "Personal CLI tool for maniagin my Obsidian vault"
+authors = [
+    {name = "Edvin Lidholm", email = "edvinlidholm+sb_cli@protonmail.com"},
+]
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
+
+dependencies = [
+    "typer==0.19.2",
+    "rich==11.2.0",
+    "pydantic==2.7.4",
+    "pydantic-yaml==1.6.0",
+    "GitPython==3.1.45",
+    "typing_extensions==4.12.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.3.5",
+    "pytest-cov==6.2.1",
+    "pytest-mock==3.15.1",
+    "ruff==0.11.4",
+    "mypy==1.15.0",
+    "types-setuptools",
+]
+
+[project.scripts]
+sb = "sb:app"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_path = ["src"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--verbose",
+    "--tb=short",
+    "-p", "no:warnings",
+]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/__init__.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+indent-width = 4
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+]
+ignore = [
+    "E501",  # line too long
+    "B008",  # do not perform function calls in argument defaults
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/*" = [
+    "S101",  # Allow asserts in tests
+    "B017",  # Allow asserting generic exceptions in tests
+]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+show_error_codes = true
+ignore_missing_imports = true

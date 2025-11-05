@@ -7,18 +7,18 @@ Second Brain CLI Tool
 A command-line interface for managing your second-brain note system.
 """
 
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
-from rich import print
-from datetime import datetime
-import git
-from git.exc import GitCommandError, InvalidGitRepositoryError
 
+import git
 import typer
+from git.exc import GitCommandError, InvalidGitRepositoryError
+from rich import print
 from typing_extensions import Annotated
 
-from config import InvalidVaultError, load_config
 import new
+from config import InvalidVaultError, load_config
 
 app = typer.Typer(
     name="sb",
@@ -29,12 +29,16 @@ app = typer.Typer(
 app.add_typer(new.app, name="new")
 
 
-@app.command()
+@app.command(name="sync")
 def sync(
     branch: Annotated[str, typer.Argument(help="Git branch to sync with.")] = "master",
-    message: Annotated[str, typer.Option("--message", "-m", help="Git commit message.")] = f"vault backup: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+    message: Annotated[
+        str, typer.Option("--message", "-m", help="Git commit message.")
+    ] = f"vault backup: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
     vault_path: Annotated[Optional[Path], typer.Option("--path", "-p", help="Path to the Obsidian vault.")] = None,
-    config_file: Annotated[Path, typer.Option("--config", "-c", help="Path to the sb config file.")] = "~/.sb_config.yml",
+    config_file: Annotated[
+        str, typer.Option("--config", "-c", help="Path to the sb config file.")
+    ] = "~/.sb_config.yml",
 ) -> None:
     """Sync the local instance of the Second Brain vault with the remote Git repository.
 
@@ -47,7 +51,9 @@ def sync(
         print(f":cross_mark: [bold red]{exc}[/bold red]")
         raise typer.Exit(code=1) from exc
 
-    print(f":brain: Syncing Second Brain Vault at [green]{config.vault_path}[/green] with remote repository branch [cyan]{branch}[/cyan]...")
+    print(
+        f":brain: Syncing Second Brain Vault at [green]{config.vault_path}[/green] with remote repository branch [cyan]{branch}[/cyan]..."
+    )
 
     try:
         git_repo = git.Repo(config.vault_path)
@@ -89,7 +95,9 @@ def sync(
             print(f":cross_mark: [bold red]Failed to fetch from remote: {exc}[/bold red]")
             raise typer.Exit(code=1) from exc
 
-        print(f"\n:shuffle_tracks_button: Rebasing local '[cyan]{current_branch}[/cyan]' onto 'origin/[cyan]{branch}[/cyan]'...")
+        print(
+            f"\n:shuffle_tracks_button: Rebasing local '[cyan]{current_branch}[/cyan]' onto 'origin/[cyan]{branch}[/cyan]'..."
+        )
         try:
             git_repo.git.rebase(f"origin/{branch}")
             print(":white_check_mark: Rebase [green]successful[/green]")
@@ -114,9 +122,9 @@ def sync(
 
         print("\n:party_popper: [bold green]All operations completed successfully![/bold green]")
 
-    except InvalidGitRepositoryError:
+    except InvalidGitRepositoryError as exc:
         print(f":cross_mark: [bold red]'{config.vault_path}' is not a valid git repository.[/bold red]")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from exc
     except GitCommandError as exc:
         print(f":cross_mark: [bold red]Git command failed: {exc}[/bold red]")
         raise typer.Exit(code=1) from exc
@@ -125,10 +133,12 @@ def sync(
         raise typer.Exit(code=1) from exc
 
 
-@app.command()
+@app.command(name="info")
 def info(
     vault_path: Annotated[Optional[Path], typer.Option("--path", "-p", help="Path to the Obsidian vault.")] = None,
-    config_file: Annotated[Path, typer.Option("--config", "-c", help="Path to the sb config file.")] = "~/.sb_config.yml",
+    config_file: Annotated[
+        str, typer.Option("--config", "-c", help="Path to the sb config file.")
+    ] = "~/.sb_config.yml",
 ) -> None:
     """Display information about the current vault and system status."""
     try:

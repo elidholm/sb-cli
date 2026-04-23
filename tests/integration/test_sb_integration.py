@@ -6,7 +6,7 @@ Test component interactions with real file system and Git operations where possi
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import git
 import typer
@@ -394,25 +394,41 @@ class TestCommandLineInterface(unittest.TestCase):
         """Set up CLI runner."""
         self.runner = CliRunner()
 
+    @patch("sb.load_config")
     @patch("sb.git.Repo")
-    @patch("sb.sync")
-    def test_cli_sync_command(self, mock_sync, mock_repo_class):
-        """Test that CLI calls sync command properly."""
-        # Test sync command with arguments
+    def test_cli_sync_command(self, mock_repo_class, mock_load_config):
+        """Test that CLI sync command can be invoked via the CLI interface."""
+        mock_config = Config(vault_path=Path("/test/vault"), inbox_folder="0_Inbox")
+        mock_load_config.return_value = mock_config
+
+        mock_repo = MagicMock()
+        mock_repo_class.return_value = mock_repo
+        mock_repo.active_branch.name = "master"
+        mock_repo.is_dirty.return_value = False
+
+        mock_origin = MagicMock()
+        mock_repo.remote.return_value = mock_origin
+
         result = self.runner.invoke(app, ["sync", "master", "-m", "CLI test commit"])
 
-        print(f"{result.output=}")
-
-        # Verify sync was called (though it will fail without proper setup)
         self.assertEqual(result.exit_code, 0)
+        mock_load_config.assert_called_once()
 
-    @patch("sb.info")
-    def test_cli_info_command(self, mock_info):
-        """Test that CLI calls info command properly."""
-        # Test info command
+    @patch("sb.load_config")
+    def test_cli_info_command(self, mock_load_config):
+        """Test that CLI info command can be invoked via the CLI interface."""
+        mock_vault_path = MagicMock(spec=Path)
+        mock_config = Config(inbox_folder="0_Inbox")
+        mock_config.vault_path = mock_vault_path
+        mock_load_config.return_value = mock_config
+
+        mock_folder = MagicMock(spec=Path)
+        mock_folder.exists.return_value = True
+        mock_folder.is_dir.return_value = True
+        mock_folder.glob.return_value = []
+        mock_vault_path.__truediv__.return_value = mock_folder
+
         result = self.runner.invoke(app, ["info"])
 
-        print(f"{result.output=}")
-
-        # Verify info was called
         self.assertEqual(result.exit_code, 0)
+        mock_load_config.assert_called_once()

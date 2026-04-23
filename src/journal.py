@@ -267,6 +267,7 @@ def weekly(
     created_date = datetime.now().strftime("%Y-%m-%d")
 
     inbox_path = config.vault_path / config.inbox_folder
+    inbox_files: list[str] = []
     if inbox_path.exists() and inbox_path.is_dir():
         inbox_files = [path.stem for path in list(inbox_path.glob("*.md"))]
 

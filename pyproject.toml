@@ -10,12 +10,12 @@ requires-python = ">=3.10"
 license = {text = "Apache-2.0"}
 
 dependencies = [
-    "typer==0.26.7",
+    "typer==0.26.8",
     "rich==15.0.0",
     "pydantic==2.13.4",
     "pydantic-yaml==1.7.0",
-    "GitPython==3.1.50",
-    "typing_extensions==4.15.0",
+    "GitPython==3.1.51",
+    "typing_extensions==4.16.0",
 ]
 
 [project.optional-dependencies]
@@ -23,8 +23,8 @@ dev = [
     "pytest==9.1.1",
     "pytest-cov==7.1.0",
     "pytest-mock==3.15.1",
-    "ruff==0.15.18",
-    "mypy==2.1.0",
+    "ruff==0.15.21",
+    "mypy==2.3.0",
     "parameterized==0.9.0",
     "PyYAML==6.0.3",
     "types-setuptools",

@@ -10,8 +10,27 @@ Functions:
 """
 
 import re
+from datetime import date
 from pathlib import Path
 from typing import Optional
+
+
+def parse_iso_date(value: str) -> date:
+    """Parse a date in strict YYYY-MM-DD format.
+
+    Args:
+        value (str): The date string to parse.
+
+    Returns:
+        date: The parsed calendar date.
+
+    Raises:
+        ValueError: If the value is invalid or does not use YYYY-MM-DD format.
+    """
+    parsed_date = date.fromisoformat(value)
+    if parsed_date.isoformat() != value:
+        raise ValueError("Date must use YYYY-MM-DD format.")
+    return parsed_date
 
 
 def daily_exists(daily_path: Path) -> bool:

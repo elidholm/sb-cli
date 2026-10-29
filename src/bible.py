@@ -6,15 +6,14 @@ CLI tool to create Bible study notes in an Obsidian vault.
 import textwrap
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Optional
 
 import typer
 from rich import print
-from typing_extensions import Annotated
 
 import journal
 from config import InvalidVaultError, load_config
-from utils import daily_exists, format_hashtags
+from utils import daily_exists, format_hashtags, parse_iso_date
 
 app = typer.Typer(
     name="bible",
@@ -281,16 +280,16 @@ def _get_adjacent_chapters(book: str, chapter: int) -> tuple[Optional[str], Opti
     previous_chapter = None
     next_chapter = None
     if chapter > 1:
-        previous_chapter = f"{_format_book_name(book)}_{chapter - 1}"
+        previous_chapter = f"{_format_book_name(book)}_{chapter - 1:02}"
     elif book_index > 0:
         prev_book, prev_chapters = KJV_BIBLE_BOOKS[book_index - 1]
-        previous_chapter = f"{_format_book_name(prev_book)}_{prev_chapters}"
+        previous_chapter = f"{_format_book_name(prev_book)}_{prev_chapters:02}"
 
     if chapter < current_book_chapters:
-        next_chapter = f"{_format_book_name(book)}_{chapter + 1}"
+        next_chapter = f"{_format_book_name(book)}_{chapter + 1:02}"
     elif book_index < len(KJV_BIBLE_BOOKS) - 1:
         next_book, _ = KJV_BIBLE_BOOKS[book_index + 1]
-        next_chapter = f"{_format_book_name(next_book)}_1"
+        next_chapter = f"{_format_book_name(next_book)}_01"
 
     return previous_chapter, next_chapter
 
@@ -326,10 +325,14 @@ def chapter(
         print(f":cross_mark: [bold red]Chapter {chapter} is not valid for the book of {book}.[/bold red]")
         raise typer.Exit(code=1)
 
+    try:
+        note_date = parse_iso_date(date_read) if date_read is not None else datetime.now().date()
+    except ValueError as exc:
+        print(f":cross_mark: [bold red]{exc}[/bold red]")
+        raise typer.Exit(code=1) from exc
+
     bible_path = config.vault_path / "1_Projects/Bible-Study" / book.title()
     bible_path.mkdir(parents=True, exist_ok=True)
-
-    date_read = date_read or datetime.now().strftime("%Y-%m-%d")
 
     note_filename = f"{_format_book_name(book)}_{chapter:02}.md"
     note_path = bible_path / note_filename
@@ -338,17 +341,22 @@ def chapter(
         print(f":information: [yellow]Chapter summary for {book} chapter {chapter} already exists.[/yellow]")
         raise typer.Exit(code=0)
 
-    daily_path = config.vault_path / "2_Areas/Journal/Daily" / f"{date_read}.md"
+    daily_path = config.vault_path / "2_Areas/Journal/Daily" / f"{note_date:%Y-%m-%d}.md"
     if not daily_exists(daily_path):
-        ctx.invoke(journal.daily)
-        print(f":spiral_notepad: [yellow]Created daily note for {date_read}.[/yellow]")
+        ctx.invoke(
+            journal.daily,
+            vault_path=config.vault_path,
+            config_file=config_file,
+            date_read=note_date.isoformat(),
+        )
+        print(f":spiral_notepad: [yellow]Created daily note for {note_date}.[/yellow]")
 
     prev, nxt, misc_links = _get_links(book, chapter)
 
     content = textwrap.dedent(f"""\
             # {book} | Chapter {chapter}
 
-            **Date Read**: {date_read}
+            **Date Read**: {note_date:%Y-%m-%d}
 
             ## Key Verses
 

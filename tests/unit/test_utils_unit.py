@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
 # Import the functions to test
-from utils import daily_exists, find_vault_root, format_hashtags, sanitize_filename
+from utils import daily_exists, find_vault_root, format_hashtags, parse_iso_date, sanitize_filename
 
 
 class TestDailyExists(unittest.TestCase):
@@ -39,6 +39,20 @@ class TestDailyExists(unittest.TestCase):
         """Test daily_exists with None path."""
         with self.assertRaises(AttributeError):
             daily_exists(None)
+
+
+class TestParseIsoDate(unittest.TestCase):
+    """Unit tests for strict ISO date parsing."""
+
+    def test_parse_iso_date_accepts_canonical_date(self):
+        """Test that a canonical date parses successfully."""
+        self.assertEqual(parse_iso_date("2024-02-29").isoformat(), "2024-02-29")
+
+    def test_parse_iso_date_rejects_noncanonical_or_path_input(self):
+        """Test that malformed and traversal-like values are rejected."""
+        for value in ("2024-2-29", "2024-02-29/../../outside"):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                parse_iso_date(value)
 
 
 class TestFindVaultRoot(unittest.TestCase):

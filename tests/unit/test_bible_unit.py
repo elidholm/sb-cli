@@ -410,21 +410,21 @@ class TestGetAdjacentChapters(unittest.TestCase):
     def test_middle_chapter(self):
         """Test getting adjacent chapters for a middle chapter."""
         prev, nxt = _get_adjacent_chapters("Genesis", 2)
-        self.assertEqual(prev, "genesis_1")
-        self.assertEqual(nxt, "genesis_3")
+        self.assertEqual(prev, "genesis_01")
+        self.assertEqual(nxt, "genesis_03")
 
     def test_first_chapter_of_book(self):
         """Test getting adjacent chapters for the first chapter of a book."""
         prev, nxt = _get_adjacent_chapters("Genesis", 1)
         # First chapter of the whole Bible, no previous
         self.assertIsNone(prev)
-        self.assertEqual(nxt, "genesis_2")
+        self.assertEqual(nxt, "genesis_02")
 
     def test_last_chapter_of_book_not_bible(self):
         """Test getting adjacent chapters for the last chapter of a non-last book."""
         prev, nxt = _get_adjacent_chapters("Genesis", 50)
         self.assertEqual(prev, "genesis_49")
-        self.assertEqual(nxt, "exodus_1")  # Next book starts at chapter 1
+        self.assertEqual(nxt, "exodus_01")  # Next book starts at chapter 1
 
     def test_last_chapter_of_bible(self):
         """Test getting adjacent chapters for the last chapter of Revelation."""
@@ -436,7 +436,7 @@ class TestGetAdjacentChapters(unittest.TestCase):
         """Test transition from last chapter of one book to first of next."""
         prev, nxt = _get_adjacent_chapters("Exodus", 1)
         self.assertEqual(prev, "genesis_50")  # Last chapter of Genesis
-        self.assertEqual(nxt, "exodus_2")
+        self.assertEqual(nxt, "exodus_02")
 
     def test_invalid_book(self):
         """Test with invalid book returns (None, None)."""
@@ -462,7 +462,7 @@ class TestGetLinks(unittest.TestCase):
         """Test links for Genesis chapter 1."""
         prev, nxt, misc = _get_links("Genesis", 1)
         self.assertEqual(prev, "N/A")  # No previous for first chapter of Bible
-        self.assertEqual(nxt, "[[genesis_2]]")
+        self.assertEqual(nxt, "[[genesis_02]]")
         self.assertIn("the_bible", misc)
         self.assertIn("old_testament", misc)
         self.assertIn("pentateuch", misc)

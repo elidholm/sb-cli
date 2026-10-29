@@ -11,6 +11,7 @@ from unittest.mock import MagicMock, patch
 import typer
 from typer.testing import CliRunner
 
+import journal
 from bible import app, chapter
 from config import Config
 
@@ -208,8 +209,8 @@ class TestChapterCommandIntegration(unittest.TestCase):
 
         note_path = self.vault_path / "1_Projects" / "Bible-Study" / "Genesis" / "genesis_02.md"
         content = note_path.read_text(encoding="utf-8")
-        self.assertIn("**Previous**: [[genesis_1]]", content)
-        self.assertIn("**Next**: [[genesis_3]]", content)
+        self.assertIn("**Previous**: [[genesis_01]]", content)
+        self.assertIn("**Next**: [[genesis_03]]", content)
 
     @patch("bible.load_config")
     def test_chapter_writes_link_to_daily_note(self, mock_load_config):
@@ -244,6 +245,8 @@ class TestChapterCommandIntegration(unittest.TestCase):
         mock_load_config.return_value = mock_config
 
         ctx = MagicMock()
+        ctx.invoke.side_effect = lambda callback, **kwargs: callback(**kwargs)
+        config_file = str(self.temp_path / "missing-config.yml")
         with patch("bible.print"):
             with patch("bible.daily_exists", return_value=False):
                 chapter(
@@ -252,11 +255,20 @@ class TestChapterCommandIntegration(unittest.TestCase):
                     chapter=4,
                     date_read="2024-01-15",
                     vault_path=self.vault_path,
-                    config_file="~/.sb_config.yml",
+                    config_file=config_file,
                     tags=None,
                 )
 
-        ctx.invoke.assert_called()
+        ctx.invoke.assert_called_once_with(
+            journal.daily,
+            vault_path=self.vault_path,
+            config_file=config_file,
+            date_read="2024-01-15",
+        )
+        daily_note = self.vault_path / "2_Areas" / "Journal" / "Daily" / "2024-01-15.md"
+        content = daily_note.read_text(encoding="utf-8")
+        self.assertIn("# 2024-01-15", content)
+        self.assertIn("[[genesis_04.md]]", content)
 
 
 class TestChapterCLIIntegration(unittest.TestCase):
@@ -317,3 +329,17 @@ class TestChapterCLIIntegration(unittest.TestCase):
         )
 
         self.assertEqual(result.exit_code, 1)
+
+    @patch("bible.load_config")
+    def test_cli_rejects_non_date_path_input(self, mock_load_config):
+        """Test that traversal-like values are rejected as dates before writing files."""
+        mock_config = Config(vault_path=self.vault_path, inbox_folder="0_Inbox")
+        mock_load_config.return_value = mock_config
+
+        result = self.runner.invoke(
+            app,
+            ["Genesis", "1", "--path", str(self.vault_path), "--date", "2024-01-01/../../outside"],
+        )
+
+        self.assertNotEqual(result.exit_code, 0)
+        self.assertFalse((self.vault_path / "1_Projects" / "Bible-Study" / "Genesis").exists())

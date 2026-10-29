@@ -5,11 +5,13 @@ Test component interactions with real file system operations.
 
 import tempfile
 import unittest
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from typer.testing import CliRunner
 
+import journal
 from config import Config
 from new import app, empty
 
@@ -125,19 +127,32 @@ class TestEmptyCommandIntegration(unittest.TestCase):
         mock_load_config.return_value = mock_config
 
         ctx = MagicMock()
+        ctx.invoke.side_effect = lambda callback, **kwargs: callback(**kwargs)
+        config_file = str(self.temp_path / "missing-config.yml")
+        fixed_now = datetime(2026, 1, 7, 10)
 
-        with patch("new.print"):
-            with patch("new.daily_exists", return_value=False):
-                with patch("new.journal.daily"):
+        with patch("new.datetime") as new_datetime, patch("journal.datetime") as journal_datetime:
+            new_datetime.now.return_value = fixed_now
+            journal_datetime.now.return_value = fixed_now
+            with patch("new.print"):
+                with patch("new.daily_exists", return_value=False):
                     empty(
                         ctx,
                         title="Note With Daily",
                         vault_path=self.vault_path,
-                        config_file="~/.sb_config.yml",
+                        config_file=config_file,
                         tags=None,
                     )
 
-                ctx.invoke.assert_called()
+        ctx.invoke.assert_called_once_with(
+            journal.daily,
+            vault_path=self.vault_path,
+            config_file=config_file,
+        )
+        today = self.vault_path / "2_Areas" / "Journal" / "Daily" / f"{fixed_now:%Y-%m-%d}.md"
+        content = today.read_text(encoding="utf-8")
+        self.assertIn("## Daily Goals", content)
+        self.assertIn("[[note_with_daily.md]]", content)
 
     @patch("new.load_config")
     def test_empty_note_written_to_daily(self, mock_load_config):

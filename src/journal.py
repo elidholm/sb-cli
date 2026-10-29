@@ -4,22 +4,26 @@ CLI tool to create daily journal entries in an Obsidian vault.
 """
 
 import textwrap
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Optional
 
 import typer
 from rich import print
-from typing_extensions import Annotated
 
 from config import InvalidVaultError, load_config
-from utils import format_hashtags
+from utils import format_hashtags, parse_iso_date
 
 app = typer.Typer(
     name="journal",
     help="Commands to manage journal entries.",
     no_args_is_help=True,
 )
+
+
+def _week_label(day: date) -> str:
+    """Return a review label using the existing week numbering and filename format."""
+    return f"{int(day.strftime('%W')) + 1}-{day.strftime('%Y')}"
 
 
 @app.command(name="monthly")
@@ -42,14 +46,18 @@ def monthly(
     monthly_path = config.vault_path / "2_Areas/Journal/Monthly-Reflection"
     monthly_path.mkdir(parents=True, exist_ok=True)
 
-    this_month = datetime.now().strftime("%b-%Y")
+    now = datetime.now()
+    this_month = now.strftime("%b-%Y")
+    first_of_month = now.date().replace(day=1)
+    previous_month = first_of_month - timedelta(days=1)
+    next_month = (first_of_month + timedelta(days=32)).replace(day=1)
     note_path = monthly_path / f"{this_month}.md"
 
     if note_path.exists():
         print(f":information: [yellow]Monthly reflection for {this_month} already exists.[/yellow]")
         raise typer.Exit(code=0)
 
-    created_date = datetime.now().strftime("%Y-%m-%d")
+    created_date = now.strftime("%Y-%m-%d")
 
     content = textwrap.dedent(f"""\
             # {this_month.replace("-", " - ")} Monthly Reflection
@@ -223,8 +231,8 @@ def monthly(
             ---
 
             **Tags**: #monthly-review #reflection {format_hashtags(tags)}
-            **Previous Month**: [[{(datetime.now() - timedelta(days=31)).strftime("%b-%Y")}]]
-            **Next Month**: [[{(datetime.now() + timedelta(days=28)).strftime("%b-%Y")}]]""")
+            **Previous Month**: [[{previous_month.strftime("%b-%Y")}]]
+            **Next Month**: [[{next_month.strftime("%b-%Y")}]]""")
 
     try:
         with note_path.open("w", encoding="utf-8") as f:
@@ -257,7 +265,10 @@ def weekly(
     weekly_path = config.vault_path / "2_Areas/Journal/Weekly-Review"
     weekly_path.mkdir(parents=True, exist_ok=True)
 
-    this_week = f"{int(datetime.now().strftime('%W')) + 1}-{datetime.now().strftime('%Y')}"
+    today = datetime.now().date()
+    this_week = _week_label(today)
+    previous_week = _week_label(today - timedelta(weeks=1))
+    next_week = _week_label(today + timedelta(weeks=1))
     note_path = weekly_path / f"{this_week}.md"
 
     if note_path.exists():
@@ -351,8 +362,8 @@ def weekly(
 ---
 
 **Tags**: #weekly-review #reflection {format_hashtags(tags)}
-**Previous Week**: [[{(datetime.now() - timedelta(weeks=1)).strftime("%W-%Y")}]]
-**Next Week**: [[{(datetime.now() + timedelta(weeks=1)).strftime("%W-%Y")}]]""")
+**Previous Week**: [[{previous_week}]]
+**Next Week**: [[{next_week}]]""")
 
     try:
         with note_path.open("w", encoding="utf-8") as f:
@@ -371,6 +382,9 @@ def daily(
     config_file: Annotated[
         str, typer.Option("--config", "-c", help="Path to the sb config file.")
     ] = "~/.sb_config.yml",
+    date_read: Annotated[
+        Optional[str], typer.Option("--date", "-d", help="Date for the daily note (YYYY-MM-DD).")
+    ] = None,
     tags: Annotated[
         Optional[str], typer.Option("--tags", "-t", help="Comma-separated tags to include in the note.")
     ] = None,
@@ -382,10 +396,16 @@ def daily(
         print(f":cross_mark: [bold red]{exc}[/bold red]")
         raise typer.Exit(code=1) from exc
 
+    try:
+        note_date = parse_iso_date(date_read) if date_read is not None else datetime.now().date()
+    except ValueError as exc:
+        print(f":cross_mark: [bold red]{exc}[/bold red]")
+        raise typer.Exit(code=1) from exc
+
     daily_path = config.vault_path / "2_Areas/Journal/Daily"
     daily_path.mkdir(parents=True, exist_ok=True)
 
-    todays_date = datetime.now().strftime("%Y-%m-%d")
+    todays_date = note_date.strftime("%Y-%m-%d")
     note_path = daily_path / f"{todays_date}.md"
 
     if note_path.exists():
@@ -437,8 +457,8 @@ def daily(
             **Mood**:
             **Weather**:
             **Tags**: #daily-journal #reflection {format_hashtags(tags)}
-            **Yesterday**: [[{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}]]
-            **Tomorrow**: [[{(datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")}]]
+            **Yesterday**: [[{(note_date - timedelta(days=1)).strftime("%Y-%m-%d")}]]
+            **Tomorrow**: [[{(note_date + timedelta(days=1)).strftime("%Y-%m-%d")}]]
 
             ---
             """)

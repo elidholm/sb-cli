@@ -5,6 +5,7 @@ Test component interactions with real file system operations.
 
 import tempfile
 import unittest
+from datetime import datetime as DateTime
 from pathlib import Path
 from unittest.mock import patch
 
@@ -44,6 +45,25 @@ class TestDailyCommandIntegration(unittest.TestCase):
         today = datetime.now().strftime("%Y-%m-%d")
         expected_path = self.vault_path / "2_Areas" / "Journal" / "Daily" / f"{today}.md"
         self.assertTrue(expected_path.exists())
+
+    @patch("journal.load_config")
+    def test_daily_creates_note_for_requested_date(self, mock_load_config):
+        """Test that a requested date selects the note filename and adjacent-day links."""
+        mock_load_config.return_value = Config(vault_path=self.vault_path, inbox_folder="0_Inbox")
+        requested_date = "2024-02-29"
+
+        with patch("journal.print"):
+            daily(
+                vault_path=self.vault_path,
+                config_file="~/.sb_config.yml",
+                date_read=requested_date,
+                tags=None,
+            )
+
+        note_path = self.vault_path / "2_Areas" / "Journal" / "Daily" / "2024-02-29.md"
+        content = note_path.read_text(encoding="utf-8")
+        self.assertIn("**Yesterday**: [[2024-02-28]]", content)
+        self.assertIn("**Tomorrow**: [[2024-03-01]]", content)
 
     @patch("journal.load_config")
     def test_daily_note_content(self, mock_load_config):
@@ -154,6 +174,22 @@ class TestWeeklyCommandIntegration(unittest.TestCase):
         weekly_dir = self.vault_path / "2_Areas" / "Journal" / "Weekly-Review"
         expected_path = weekly_dir / f"{week_num}-{year}.md"
         self.assertTrue(expected_path.exists())
+
+    @patch("journal.load_config")
+    def test_weekly_links_use_existing_numbering_across_year_boundary(self, mock_load_config):
+        """Test that neighboring weekly links match the preserved filename scheme across New Year."""
+        fixed_now = DateTime(2025, 1, 1, 12)
+        mock_load_config.return_value = Config(vault_path=self.vault_path, inbox_folder="0_Inbox")
+
+        with patch("journal.datetime") as mock_datetime:
+            mock_datetime.now.return_value = fixed_now
+            with patch("journal.print"):
+                weekly(vault_path=self.vault_path, config_file="~/.sb_config.yml", tags=None)
+
+        note_path = self.vault_path / "2_Areas" / "Journal" / "Weekly-Review" / "1-2025.md"
+        content = note_path.read_text(encoding="utf-8")
+        self.assertIn("**Previous Week**: [[53-2024]]", content)
+        self.assertIn("**Next Week**: [[2-2025]]", content)
 
     @patch("journal.load_config")
     def test_weekly_content_structure(self, mock_load_config):
@@ -290,6 +326,22 @@ class TestMonthlyCommandIntegration(unittest.TestCase):
         self.assertTrue(expected_path.exists())
 
     @patch("journal.load_config")
+    def test_monthly_links_use_adjacent_calendar_months(self, mock_load_config):
+        """Test that monthly links use calendar boundaries at the start of a month."""
+        fixed_now = DateTime(2026, 5, 1, 12)
+        mock_load_config.return_value = Config(vault_path=self.vault_path, inbox_folder="0_Inbox")
+
+        with patch("journal.datetime") as mock_datetime:
+            mock_datetime.now.return_value = fixed_now
+            with patch("journal.print"):
+                monthly(vault_path=self.vault_path, config_file="~/.sb_config.yml", tags=None)
+
+        note_path = self.vault_path / "2_Areas" / "Journal" / "Monthly-Reflection" / "May-2026.md"
+        content = note_path.read_text(encoding="utf-8")
+        self.assertIn("**Previous Month**: [[Apr-2026]]", content)
+        self.assertIn("**Next Month**: [[Jun-2026]]", content)
+
+    @patch("journal.load_config")
     def test_monthly_content_structure(self, mock_load_config):
         """Test that the monthly reflection has the correct content structure."""
         from datetime import datetime
@@ -397,6 +449,16 @@ class TestJournalCLIIntegration(unittest.TestCase):
 
         today = datetime.now().strftime("%Y-%m-%d")
         self.assertTrue((self.vault_path / "2_Areas" / "Journal" / "Daily" / f"{today}.md").exists())
+
+    @patch("journal.load_config")
+    def test_cli_daily_requested_date(self, mock_load_config):
+        """Test the CLI creates a daily note for an explicit date."""
+        mock_load_config.return_value = Config(vault_path=self.vault_path, inbox_folder="0_Inbox")
+
+        result = self.runner.invoke(app, ["daily", "--path", str(self.vault_path), "--date", "2024-02-29"])
+
+        self.assertEqual(result.exit_code, 0)
+        self.assertTrue((self.vault_path / "2_Areas" / "Journal" / "Daily" / "2024-02-29.md").exists())
 
     @patch("journal.load_config")
     def test_cli_weekly_command(self, mock_load_config):

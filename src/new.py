@@ -5,12 +5,11 @@ CLI tool for creating new notes in an Obsidian vault.
 import textwrap
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Optional
 
 import typer
 from rich import print
 from rich.prompt import Confirm, Prompt
-from typing_extensions import Annotated
 
 import bible
 import journal
@@ -84,7 +83,7 @@ def empty(
 
     daily_path = config.vault_path / "2_Areas/Journal/Daily" / (created_date + ".md")
     if not daily_exists(daily_path):
-        ctx.invoke(journal.daily)
+        ctx.invoke(journal.daily, vault_path=config.vault_path, config_file=config_file)
         print(f":spiral_notepad: [yellow]Created daily note for {created_date}.[/yellow]")
 
     content = textwrap.dedent(f"""\

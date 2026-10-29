@@ -3,32 +3,31 @@ name = "sb-cli"
 version = "0.1.0"
 description = "Personal CLI tool for maniagin my Obsidian vault"
 authors = [
-    {name = "Edvin Lidholm", email = "edvinlidholm+sb_cli@protonmail.com"},
+  { name = "Edvin Lidholm", email = "edvinlidholm+sb_cli@protonmail.com" },
 ]
 readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "Apache-2.0"}
+license = { text = "Apache-2.0" }
 
 dependencies = [
-    "typer==0.27.3",
-    "rich==15.0.0",
-    "pydantic==2.14.1",
-    "pydantic-yaml==1.7.0",
-    "GitPython==3.2.1",
-    "typing_extensions==4.16.0",
+  "typer==0.27.3",
+  "rich==15.0.0",
+  "pydantic==2.14.1",
+  "pydantic-yaml==1.7.0",
+  "GitPython==3.2.1",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest==9.1.1",
-    "pytest-cov==7.1.0",
-    "pytest-mock==3.17.0",
-    "ruff==0.17.2",
-    "mypy==2.4.0",
-    "parameterized==0.9.0",
-    "PyYAML==6.0.3",
-    "types-setuptools",
-    "bandit==1.9.4",
+  "pytest==9.1.1",
+  "pytest-cov==7.1.0",
+  "pytest-mock==3.17.0",
+  "ruff==0.17.2",
+  "mypy==2.4.0",
+  "parameterized==0.9.0",
+  "PyYAML==6.0.3",
+  "types-setuptools",
+  "bandit==1.9.4",
 ]
 
 [project.scripts]
@@ -40,33 +39,21 @@ python_path = ["src"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = [
-    "--verbose",
-    "--tb=short",
-    "-p", "no:warnings",
-]
-markers = [
-    "unit: Unit tests",
-    "integration: Integration tests",
-]
+addopts = ["--verbose", "--tb=short", "-p", "no:warnings"]
+markers = ["unit: Unit tests", "integration: Integration tests"]
 
 [tool.coverage.run]
 source = ["src"]
-omit = [
-    "*/tests/*",
-    "*/test_*",
-    "*/__pycache__/*",
-    "*/__init__.py",
-]
+omit = ["*/tests/*", "*/test_*", "*/__pycache__/*", "*/__init__.py"]
 
 [tool.coverage.report]
 exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "if self.debug:",
-    "raise AssertionError",
-    "raise NotImplementedError",
-    "if __name__ == .__main__.:",
+  "pragma: no cover",
+  "def __repr__",
+  "if self.debug:",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if __name__ == .__main__.:",
 ]
 
 [tool.ruff]
@@ -76,23 +63,23 @@ indent-width = 4
 
 [tool.ruff.lint]
 select = [
-    "E",   # pycodestyle errors
-    "W",   # pycodestyle warnings
-    "F",   # pyflakes
-    "I",   # isort
-    "B",   # flake8-bugbear
-    "C4",  # flake8-comprehensions
+  "E",  # pycodestyle errors
+  "W",  # pycodestyle warnings
+  "F",  # pyflakes
+  "I",  # isort
+  "B",  # flake8-bugbear
+  "C4", # flake8-comprehensions
 ]
 ignore = [
-    "E501",  # line too long
-    "B008",  # do not perform function calls in argument defaults
+  "E501", # line too long
+  "B008", # do not perform function calls in argument defaults
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
 "tests/*" = [
-    "S101",  # Allow asserts in tests
-    "B017",  # Allow asserting generic exceptions in tests
+  "S101", # Allow asserts in tests
+  "B017", # Allow asserting generic exceptions in tests
 ]
 
 [tool.mypy]

@@ -9,13 +9,12 @@ A command-line interface for managing your second-brain note system.
 
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Optional
 
 import git
 import typer
 from git.exc import GitCommandError, InvalidGitRepositoryError
 from rich import print
-from typing_extensions import Annotated
 
 import new
 from config import InvalidVaultError, load_config
